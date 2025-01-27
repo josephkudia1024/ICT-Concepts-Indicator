@@ -146,16 +146,6 @@ if true
                 break
 
 
-//TO_DO:
-// fix bug: sometimes paBias does not pick up fvgs
-// fix bug: paBias algorithm repaints (ex. jan 15th 4:00pm 4hr candle)
-// add functionality for live candles in paBias
-// integrate gaps into candle algorithm
-// add pbr bias
-
-// drop down timeframe bias
-// breaker block entries
-
 bias := candleBias + paBias
 
 //--------------------DEBUG/TESTING--------------------//
