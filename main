@@ -2,6 +2,23 @@
 // © josephkudia1024
 
 //@version=6
+
+
+
+//--------------------TO_DO--------------------//
+
+// important:
+// fix bug: sometimes paBias does not pick up fvgs
+// add pbr bias
+
+// add later:
+// drop down timeframe bias
+// breaker block entries
+
+//--------------------TO_DO--------------------//
+
+
+
 indicator("4H Bias Indicator", overlay=true, max_labels_count=500)
 
 getCandleData(t, p) =>
@@ -116,14 +133,9 @@ if true
             else
                 break
 
-
-//TO_DO:
-// fix bug: sometimes paBias does not pick up fvgs
-//integrate gaps into candle algorithm
-//write paBias algorithm
-//add pbr bias
-
 bias := candleBias + paBias
+
+
 
 //--------------------DEBUG/TESTING--------------------//
 
