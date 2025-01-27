@@ -1,0 +1,162 @@
+// This Pine Script™ code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © josephkudia1024
+
+//@version=6
+indicator("4H Bias Indicator", overlay=true, max_labels_count=500)
+
+getCandleData(t, p) =>
+    hi = request.security(syminfo.tickerid, t, high[p])
+    lo = request.security(syminfo.tickerid, t, low[p])
+    op = request.security(syminfo.tickerid, t, open[p])
+    cl = request.security(syminfo.tickerid, t, close[p])
+    [hi, lo, op, cl]
+
+
+type FVG
+    string FVGtype
+    float candle1
+    float candle3
+    box plot_FVG
+
+// CANDLE #0 DATA
+[high_0, low_0, open_0, close_0] = getCandleData("240", 0)
+isGreen_0 = close_0 > open_0
+isRed_0 = close_0 < open_0
+
+// CANDLE #1 DATA
+[high_1, low_1, open_1, close_1] = getCandleData("240", 1)
+isGreen_1 = close_1 > open_1
+isRed_1 = close_1 < open_1
+
+// CANDLE #2 DATA
+[high_2, low_2, open_2, close_2] = getCandleData("240", 2)
+isGreen_2 = close_2 > open_2
+isRed_2 = close_2 < open_2
+
+// CANDLE #3 DATA
+[high_3, low_3, open_3, close_3] = getCandleData("240", 3)
+isGreen_3 = close_3 > open_3
+isRed_3 = close_3 < open_3
+
+// PERSISTANT VARS
+var array<FVG> FVGarray = array.new<FVG>()
+var int attempts = 0
+var int successes = 0
+var int fails = 0
+
+// VARS
+int paBias = 0
+int candleBias = 0
+float bias = 0
+string typeBias = na
+
+// candleBias algorithm
+if true
+    if isGreen_1 and isGreen_2
+        if close_1 > high_2 //continuation pattern (bullish)
+            candleBias := candleBias + 1
+        else
+            candleBias := candleBias + 0
+    else if isRed_1 and isRed_2
+        if close_1 < low_2 //continuation pattern (bearish)
+            candleBias := candleBias - 1
+        else
+            candleBias := candleBias + 0
+    else if isGreen_1 and isRed_2
+        if open_1 <= low_2 and close_1 >= low_2 //gapping candle returning back into range (bullish)
+            candleBias := candleBias + 1
+        else if (high_1 > high_2) and (close_1 < open_2) //previous candle high sweep of liquidity (bearish)
+            candleBias := candleBias - 1
+        else if low_1 < low_2 //previous candle low sweep of liquidity (bullish)
+            candleBias := candleBias + 1
+        else
+            candleBias := candleBias + 0
+    else if isRed_1 and isGreen_2
+        if open_1 >= high_2 and close_1 < high_2 //gapping candle returning back into range (bearish)
+            candleBias := candleBias - 1 
+        else if (low_1 < low_2) and (close_1 > open_2) //previous candle low sweep of liquidity (bullish)
+            candleBias := candleBias + 1
+        else if high_1 > high_2 //previous candle high sweep of liquidity (bearish)
+            candleBias := candleBias - 1
+        else
+            candleBias := candleBias + 0
+
+
+// paBias algorithm
+if true
+    if isGreen_2
+        if low_1 > high_3 and low_1 - high_3 >= (close_2 - open_2) / 2
+            new_FVG = FVG.new("BISI", high_3, low_1)
+            new_FVG.plot_FVG := box.new(left = bar_index[3], top = low_1, right = bar_index, bottom = high_3, bgcolor = color.new(color.green, 95), border_width = 2, border_color = color.new(color.green, 90))
+            FVGarray.push(new_FVG) //save bullish fvg
+    else if isRed_2
+        if high_1 < low_3 and low_3 - high_1 >= (open_2 - close_2) / 2
+            new_FVG = FVG.new("SIBI", low_3, high_1)
+            new_FVG.plot_FVG := box.new(left = bar_index[3], top = low_3, right = bar_index, bottom = high_1, bgcolor = color.new(color.red, 95), border_width = 2, border_color = color.new(color.red, 90))
+            FVGarray.push(new_FVG) //save bearish fvg
+
+    bool inFVG = false
+    if array.size(FVGarray) > 0
+        for i = array.size(FVGarray) - 1 to 0
+            fvg = array.get(FVGarray, i)
+            if not na(fvg.plot_FVG)
+                box.set_right(fvg.plot_FVG, bar_index)
+            if (fvg.FVGtype == "BISI" and close_1 <= fvg.candle1) or (fvg.FVGtype == "SIBI" and close_1 >= fvg.candle1)
+                inFVG := true
+                box.delete(fvg.plot_FVG)
+                array.remove(FVGarray, i)
+
+    if array.size(FVGarray) > 0
+        for i = array.size(FVGarray) - 1 to 0
+            fvg = array.get(FVGarray, i)
+            if fvg.FVGtype == "BISI" and low_1 < (fvg.candle1 + fvg.candle3) / 2 and close_1 >= fvg.candle3
+                paBias := paBias + 1
+            else if fvg.FVGtype == "SIBI" and high_1 > (fvg.candle1 + fvg.candle3) / 2 and close_1 <= fvg.candle3
+                paBias := paBias - 1
+            else
+                break
+
+
+//TO_DO:
+// fix bug: sometimes paBias does not pick up fvgs
+//integrate gaps into candle algorithm
+//write paBias algorithm
+//add pbr bias
+
+bias := candleBias + paBias
+
+//--------------------DEBUG/TESTING--------------------//
+
+if bias != 0
+    attempts := attempts + 1
+    if bias > 0 and (isGreen_0 or (high_0 - open_0 >= open_0 - low_0))
+        successes := successes + 1
+    else if bias < 0 and (isRed_0 or (open_0 - low_0 >= high_0 - open_0))
+        successes := successes + 1
+    else
+        fails := fails + 1
+
+plot(attempts, "Attempts", color=color.blue)
+plot(successes, "Successes", color=color.green)
+plot(fails, "Fails", color=color.red)
+plot((successes / attempts) * 100, "%success", color=color.white)
+
+// plot(bias, "bias")
+// plot(candleBias, "candleBias")
+// plot(paBias, "paBias")
+
+//--------------------DEBUG/TESTING--------------------//
+
+
+
+// Plot bias as a label on chart
+if bias > 0
+    typeBias := "bull"
+else if bias < 0
+    typeBias := "bear"
+else
+    typeBias := na
+
+bgColor = typeBias == "bull" ? color.new(color.green, 80) : typeBias == "bear" ? color.new(color.red, 80) : color.new(color.gray, 80)
+if not na(typeBias)
+    label.new(bar_index, high, typeBias, style=label.style_label_down, color=bgColor)
