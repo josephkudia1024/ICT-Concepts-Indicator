@@ -79,8 +79,8 @@ float bias = 0
 string typeBias = na
 
 
-// candleBias algorithm
-if true
+// LOGIC
+if true // candleBias algorithm
     if isGreen_1 and isGreen_2
         if close_1 > high_2 //continuation pattern (bullish)
             candleBias := candleBias + 1
@@ -111,8 +111,7 @@ if true
             candleBias := candleBias + 0
 
 
-// paBias algorithm
-if true
+if true // paBias algorithm
     if isGreen_2
         if low_1 > high_3 and low_1 - high_3 >= (close_2 - open_2) / 3
             new_FVG = FVG.new("BISI", high_3, low_1)
