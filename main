@@ -1,5 +1,5 @@
-// This Pine Script™ code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
-// © josephkudia1024
+// * This Pine Script™ code can not be copied and/or distributed without the express permission of Joseph Kudia *
+// © Joseph Kudia 2025 | josephkudia1024@gmail.com
 
 //@version=6
 
@@ -12,9 +12,10 @@
 // fix bug: paBias algorithm repaints (ex. jan 15th 4:00pm 4hr candle on OANDA SPX500)
 // handle cases of two candles hitting two opposite FVGs and determine main bias
 // add functionality for live candles in paBias
-// add pbr bias
+// add pbr/void bias
 
 // add later:
+// live candle gap bias
 // drop down timeframe bias
 // breaker block entries
 
@@ -61,7 +62,7 @@ isGreen_3 = close_3 > open_3
 isRed_3 = close_3 < open_3
 
 // PARAMETERS
-inputTesting = input.bool(title="Display testing", defval = false)
+inputTesting = input.bool(title="Display Accuracy Testing", defval = false)
 inputDisplayBias = input.bool(title="Display Bias", defval = false)
 inputPlotAllLabels = input.bool(title="Plot Previous Indicator Labels", defval = false)
 
